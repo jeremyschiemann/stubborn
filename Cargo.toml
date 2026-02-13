@@ -1,0 +1,21 @@
+[package]
+name = "stubborn"
+version = "0.1.0"
+edition = "2021"
+description = "Retry fallible functions."
+repository = "https://github.com/jeremyschiemann/stubborn.git"
+readme = "README.md"
+license = "MIT"
+rust-version = "1.75.0"
+documentation = "https://docs.rs/stubborn"
+
+keywords = ["retry", "error-handling", "utility", "backoff"]
+categories = ["development-tools"]
+
+exclude = [".github/*", "Makefile"]
+
+[dependencies]
+
+
+[package.metadata.docs.rs]
+all-features = true
