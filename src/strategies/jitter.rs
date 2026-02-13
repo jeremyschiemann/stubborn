@@ -10,9 +10,9 @@ impl JitterStrategy for NoJitter {
 
 #[cfg(feature = "random")]
 mod random_jitter {
+    use crate::JitterStrategy;
     use rand;
     use std::time::Duration;
-    use crate::JitterStrategy;
 
     pub struct FullJitter;
 
@@ -39,7 +39,7 @@ mod random_jitter {
             if millis == 0 {
                 return wait_duration;
             }
-            
+
             let half = millis / 2;
             let half_jittered = rand::random_range(0..half);
 

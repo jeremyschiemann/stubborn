@@ -7,7 +7,7 @@ use std::{
 use crate::strategies::jitter::FullJitter;
 
 use crate::strategies::{
-    jitter::{NoJitter},
+    jitter::NoJitter,
     stop::StopAfterAttempts,
     wait::{WaitExponential, WaitFixed},
     JitterStrategy, StopStrategy, WaitStrategy,
@@ -133,7 +133,11 @@ where
 #[cfg(test)]
 mod tests {
     use crate::{
-        Retry, strategies::{stop::{StopAfterAttempts, StopAfterDelay}, wait::WaitFixed}
+        strategies::{
+            stop::{StopAfterAttempts, StopAfterDelay},
+            wait::WaitFixed,
+        },
+        Retry,
     };
 
     #[test]
