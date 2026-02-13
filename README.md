@@ -19,6 +19,7 @@ It gives you explicit control over:
 
 -   Pluggable stop strategies
 -   Pluggable wait strategies
+-   Pluggable jitter strategies
 -   Presets for common retry patterns
 -   Access to retry metadata via `RetryInfo`
 -   Minimal and dependency-light design
@@ -118,11 +119,18 @@ pub struct RetryInfo {
 ### Stop Strategies
 
 -   `StopAfterAttempts`
+-   `StopAfterDelay`
 
 ### Wait Strategies
 
 -   `WaitFixed`
 -   `WaitExponential`
+
+### Jitter Strategies
+
+-   `NoJitter`
+-   `FullJitter`
+-   `EqualJitter`
 
 ------------------------------------------------------------------------
 
@@ -130,18 +138,19 @@ pub struct RetryInfo {
 
 -   Blocking (uses `std::thread::sleep`)
 -   No async support yet
--   No jitter strategy (yet)
 -   No predicate-based retry filtering (yet)
 
 ------------------------------------------------------------------------
 
 ## Roadmap Ideas
 
--   Jittered exponential backoff
--   Stop after elapsed duration
+-   Config functions and retry builder
 -   Retry based on error predicates
 -   Extension trait for ergonomic `.retry()` usage
 -   Async support (tokio / async-std)
 
+
+## TODO:
+- Tests for Jitter
 
 ------------------------------------------------------------------------

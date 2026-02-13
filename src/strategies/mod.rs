@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+pub mod jitter;
 pub mod stop;
 pub mod wait;
 
@@ -22,6 +23,10 @@ pub trait StopStrategy: Sized {
             right: other,
         }
     }
+}
+
+pub trait JitterStrategy {
+    fn apply(&self, wait_duration: Duration) -> Duration;
 }
 
 struct WaitAdd<WL, WR>

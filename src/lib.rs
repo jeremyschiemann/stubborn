@@ -3,21 +3,27 @@ use std::{
     time::{Duration, Instant},
 };
 
+#[cfg(feature = "random")]
+use crate::strategies::jitter::FullJitter;
+
 use crate::strategies::{
+    jitter::{NoJitter},
     stop::StopAfterAttempts,
     wait::{WaitExponential, WaitFixed},
-    StopStrategy, WaitStrategy,
+    JitterStrategy, StopStrategy, WaitStrategy,
 };
 
 pub mod strategies;
 
-pub struct Retry<S, W>
+pub struct Retry<S, W, J>
 where
     S: StopStrategy,
     W: WaitStrategy,
+    J: JitterStrategy,
 {
     stop: S,
     wait: W,
+    jitter: J,
 }
 
 pub struct RetryInfo {
@@ -25,40 +31,68 @@ pub struct RetryInfo {
     pub elapsed: Duration,
 }
 
-impl Retry<StopAfterAttempts, WaitFixed> {
+impl Retry<StopAfterAttempts, WaitFixed, NoJitter> {
     pub fn basic() -> Self {
         Self {
             wait: WaitFixed::from_secs(1),
             stop: StopAfterAttempts::from(3usize),
+            jitter: NoJitter,
         }
     }
 }
 
-impl Retry<StopAfterAttempts, WaitExponential> {
+impl Retry<StopAfterAttempts, WaitExponential, NoJitter> {
     pub fn exponential() -> Self {
         Self {
             stop: StopAfterAttempts::from(3usize),
             wait: WaitExponential::new(Duration::from_secs(1), 2.0),
+            jitter: NoJitter,
         }
     }
 }
 
-impl<S, W> Retry<S, W>
+#[cfg(feature = "random")]
+impl Retry<StopAfterAttempts, WaitExponential, FullJitter> {
+    pub fn exponential_with_jitter() -> Self {
+        Self {
+            stop: StopAfterAttempts::from(3usize),
+            wait: WaitExponential::new(Duration::from_secs(1), 2.0),
+            jitter: FullJitter,
+        }
+    }
+}
+
+impl<S, W, J> Retry<S, W, J>
 where
     S: StopStrategy,
     W: WaitStrategy,
+    J: JitterStrategy,
 {
-    pub fn stop(self, stop_strategy: impl StopStrategy) -> Retry<impl StopStrategy, W> {
+    fn calc_wait_time(&self, attempt: usize) -> Duration {
+        self.jitter.apply(self.wait.wait_duration(attempt))
+    }
+
+    pub fn stop(self, stop_strategy: impl StopStrategy) -> Retry<impl StopStrategy, W, J> {
         Retry {
             stop: stop_strategy,
             wait: self.wait,
+            jitter: self.jitter,
         }
     }
 
-    pub fn wait(self, wait_strategy: impl WaitStrategy) -> Retry<S, impl WaitStrategy> {
+    pub fn wait(self, wait_strategy: impl WaitStrategy) -> Retry<S, impl WaitStrategy, J> {
         Retry {
             stop: self.stop,
             wait: wait_strategy,
+            jitter: self.jitter,
+        }
+    }
+
+    pub fn jitter(self, jitter_strategy: impl JitterStrategy) -> Retry<S, W, impl JitterStrategy> {
+        Retry {
+            stop: self.stop,
+            wait: self.wait,
+            jitter: jitter_strategy,
         }
     }
 
@@ -82,7 +116,7 @@ where
                 );
             }
 
-            sleep(self.wait.wait_duration(attempt));
+            sleep(self.calc_wait_time(attempt));
             attempt += 1;
         }
     }
@@ -99,8 +133,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::{
-        strategies::{stop::StopAfterAttempts, wait::WaitFixed},
-        Retry,
+        Retry, strategies::{stop::{StopAfterAttempts, StopAfterDelay}, wait::WaitFixed}
     };
 
     #[test]
